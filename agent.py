@@ -52,27 +52,90 @@ class Agent:
 
         if is_training:
             memory=ReplayMemory(self.replay_memory_size)#pehle consattent 10000 thi
+            epsilon=self.epsilon_init 
+
+            target_dqn=DQN(num_states,num_actions).to(device)
+            #copy the wt and bias vals from policy =>target
+            target_dqn.load_state_dict(policy_dqn.state_dict())
+
+            steps=0
+
+            self.optimizer=optim.Adam(policy_dqn.parameters(),lr=self.alpha)
+
 
         for episode in itertools.count():
-
             state, _ = env.reset()
+            state=torch.tensor(state,dtype=torch.float,device=device)
+
             episode_rewards=0
             terminated=False
 
             while not terminated:
                 #pehle while True tha
-                action = env.action_space.sample()
+                if is_training and random.random()<epsilon:
+                    action = env.action_space.sample() #explore
+                    action=torch.tensor(action,dtype=torch.long, device=device)
+                else:
+                    with torch.no_grad():
+                        action=target_dqn(state.unsqueeze(dim=0)).squeeze().argmax() #exploit
+
         
                 # Processing: terminated => done
-                next_state, reward, terminated, _, _ = env.step(action)
-                
+                next_state, reward, terminated, _, _ = env.step(action.item())#abb action nhi abb action as tensor and tensor se val extract krne ke liye now we will do .item()
+
+                #create tensors
+                reward=torch.tensor(reward, dtype=torch.float, device=device)
+                next_state=torch.tensor(next_state, dtype=torch.float, device=device)
+
                 if is_training:
                     memory.append((state,action,next_state,reward,terminated))
+                    steps+=1
         
                 # Checking if the player is still alive
                 #if terminated:
                     #break
                 state=next_state#next iter ke liye state is next state    
                 episode_rewards+=reward    
-            print(f"episode={episode+1} with total reward={episode_rewards}")
+            print(f"episode={episode+1} with total reward={episode_rewards} & epsilon={epsilon}")
+
+            if is_training:
+                #epsilon decay
+                epsilon=max(epsilon*self.epsilon_decay,self.epsilon_min)
+
+            #sync networks
+            if is_training and len(memory) > self.mini_batch_size:
+                #get samples
+                mini_batch=memory.sample(self.mini_batch_size)
+                 
+                optimize(mini_batch,policy_dqn,target_dqn)    
+
+                #sync the network
+                if steps > self.network_sync_rate:
+                    target_dqn.load_state_dict(policy_dqn.state_dict())
+                    steps=0#reinitialize/reset steps to 0
             # env.close()
+
+    def optimize(self, mini_batch, policy_dqn, target_dqn):
+        # get batch of experiences
+        states, actions, next_states, rewards, terminations = zip(*mini_batch)
+
+        states = torch.stack(states)
+        actions = torch.stack(actions)
+        next_states = torch.stack(next_states)
+        rewards = torch.stack(rewards)
+        terminations = torch.tensor(terminations).float().to(device)
+
+        # calculate target Q-values - if terminations=true => zero
+        with torch.no_grad():
+            target_q = rewards + (1 - terminations) * self.gamma * target_dqn(next_states).max(dim=1)[0]
+
+        # calculate y_pred i.e. Q-value from current policy
+        current_q = policy_dqn(states).gather(dim=1, index=actions.unsqueeze(dim=1)).squeeze()
+
+        # compute loss
+        loss = self.loss_fn(current_q, target_q)
+
+        # optimize model
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()  
