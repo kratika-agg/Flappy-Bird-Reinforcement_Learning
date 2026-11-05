@@ -1,33 +1,42 @@
-# 🐦 Flappy Bird using Deep Reinforcement Learning
+# 🐦 Flappy Bird AI | Deep Reinforcement Learning
 
-An AI-powered Flappy Bird project that uses **Deep Q-Network (DQN)** to train an intelligent agent to play the game through reinforcement learning.
+**Training an intelligent agent to play Flappy Bird using Deep Q-Networks (DQN).**
 
-## 📌 Project Overview
+A hands-on implementation of Deep Reinforcement Learning, exploring how an AI agent learns optimal actions through environmental interaction, experience replay, and reward-based learning.
 
-This project explores how an AI agent can learn to play Flappy Bird by interacting with its environment.
+---
 
-The agent observes the game state, takes actions, receives rewards or penalties, and gradually learns a better playing strategy through experience.
+## 📌 Overview
 
-The project is currently under development.
+This project focuses on developing an AI agent capable of learning to play the Flappy Bird game using **Deep Q-Learning (DQN)**.
 
-## 🧠 Concepts Implemented
+The agent interacts with the game environment, observes the current state, selects actions, and learns from the rewards received. Through repeated interactions and neural network optimization, the agent gradually learns a playing strategy.
 
-- Deep Reinforcement Learning
-- Deep Q-Network (DQN)
-- Experience Replay
-- Agent-Environment Interaction
-- Reward-Based Learning
-- Neural Networks
+The implementation uses PyTorch for neural network operations and Gymnasium for environment interaction.
 
-## 🛠️ Tech Stack
+## 🧠 Core Concepts
 
-- **Language:** Python
-- **Deep Learning:** PyTorch
-- **Environment:** Gymnasium
-- **Game:** Flappy Bird Gymnasium
-- **Configuration:** YAML
+The project explores the following Deep Reinforcement Learning concepts:
 
-## 📂 Project Structure
+- **Deep Q-Network (DQN):** Approximating action-value functions using neural networks.
+- **Experience Replay:** Storing and sampling past experiences for training.
+- **Epsilon-Greedy Strategy:** Balancing exploration and exploitation.
+- **Target Network:** Stabilizing Q-value learning.
+- **Bellman Equation:** Updating estimated action values.
+- **Mini-Batch Optimization:** Training the network using sampled experiences.
+
+## 🛠️ Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Core programming language |
+| PyTorch | Neural network implementation |
+| Gymnasium | Reinforcement learning environment |
+| Flappy Bird Gymnasium | Flappy Bird simulation |
+| PyYAML | Hyperparameter configuration |
+| Pygame | Game rendering and interaction |
+
+## 📁 Project Structure
 
 ```text
 Flappy-Bird-Reinforcement-Learning/
@@ -41,36 +50,75 @@ Flappy-Bird-Reinforcement-Learning/
 └── .gitignore
 ```
 
-## ⚙️ Key Components
+## ⚙️ Implementation Details
 
-| File | Description |
-|---|---|
-| `agent.py` | Agent logic and interaction with the environment |
-| `dqn.py` | Deep Q-Network implementation |
-| `experience_replay.py` | Experience replay memory |
-| `game_flappy_bird.py` | Flappy Bird game environment |
-| `parameters.yaml` | Model and training configuration |
+### 1. Environment Setup
+- Initializing the Flappy Bird environment.
+- Observing game states and available actions.
+- Interacting with the environment through Gymnasium.
 
-## 🚀 Project Goals
+### 2. DQN Architecture
+- Initializing the policy network.
+- Initializing the target network.
+- Estimating Q-values for available actions.
 
-- Implement a Deep Q-Network architecture.
-- Train an AI agent to play Flappy Bird.
-- Implement experience replay for better learning.
-- Experiment with hyperparameters.
-- Evaluate the agent's performance.
+### 3. Agent Implementation
+- Loading hyperparameters from a YAML configuration file.
+- Implementing epsilon-greedy action selection.
+- Managing agent-environment interactions.
+- Tracking episode rewards.
 
-## 📈 Project Status
+### 4. Experience Replay
+- Storing state transitions.
+- Sampling mini-batches from replay memory.
+- Using past experiences to train the network.
 
-🚧 **Work in Progress**
+### 5. Network Optimization
+- Calculating target Q-values.
+- Computing prediction loss.
+- Updating network parameters using an optimizer.
+- Synchronizing the target network.
 
-Development is ongoing. More features, experiments, training results, and performance improvements will be added as the project progresses.
+## 📊 Project Progress
+
+<escape>🚧</escape> **Currently in Development**
+
+The project is being developed incrementally.
+
+- [x] Flappy Bird environment setup
+- [x] Initial DQN agent structure
+- [x] Hyperparameter configuration
+- [x] Experience replay implementation
+- [x] Policy and target network initialization
+- [x] Epsilon-greedy action selection
+- [x] Initial optimization logic
+- [ ] Complete and debug the training pipeline
+- [ ] Train the agent
+- [ ] Evaluate learning performance
+- [ ] Visualize training results
+
+## 🎯 Future Objectives
+
+- Train the agent to play Flappy Bird autonomously.
+- Experiment with different hyperparameter configurations.
+- Analyze reward progression across episodes.
+- Evaluate the trained agent's performance.
+- Document training experiments and observations.
+
+## 📚 Learning Journey
+
+This project is part of my hands-on learning journey in Reinforcement Learning and Deep Learning.
+
+The implementation follows a structured educational course, with practical exploration of DQN architecture, agent design, experience replay, and model optimization.
 
 ## 👩‍💻 Author
 
 **Kratika Agrawal**
 
-[GitHub](https://github.com/kratika-agg)
+GitHub: [@kratika-agg](https://github.com/kratika-agg)
 
 ---
 
-⭐ If you find this project interesting, consider giving it a star!
+*Built with Python, PyTorch, and curiosity about intelligent systems.*
+
+⭐ If you find this project interesting, consider giving the repository a star!
