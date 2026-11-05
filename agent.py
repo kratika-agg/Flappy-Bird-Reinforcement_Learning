@@ -1,5 +1,6 @@
 import flappy_bird_gymnasium
 import gymnasium as gym
+import random
 from dqn import DQN
 from experience_replay import ReplayMemory
 import itertools 
@@ -8,7 +9,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-if torch.backend.mps.is_available():
+
+if torch.backends.mps.is_available():
     device="mps"
 elif torch.cuda.is_available():
     device="cuda"
@@ -77,7 +79,7 @@ class Agent:
                     action=torch.tensor(action,dtype=torch.long, device=device)
                 else:
                     with torch.no_grad():
-                        action=target_dqn(state.unsqueeze(dim=0)).squeeze().argmax() #exploit
+                        action=policy_dqn(state.unsqueeze(dim=0)).squeeze().argmax() #exploit
 
         
                 # Processing: terminated => done
@@ -107,7 +109,7 @@ class Agent:
                 #get samples
                 mini_batch=memory.sample(self.mini_batch_size)
                  
-                optimize(mini_batch,policy_dqn,target_dqn)    
+                self.optimize(mini_batch,policy_dqn,target_dqn)    
 
                 #sync the network
                 if steps > self.network_sync_rate:
