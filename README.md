@@ -1,28 +1,28 @@
-# Flappy Bird AI | Deep Reinforcement Learning (DQN)
+Flappy Bird AI | Deep Reinforcement Learning (DQN)
 
-An AI agent that learns to play Flappy Bird using **Deep Q-Networks (DQN)** and **PyTorch**. This project demonstrates reinforcement learning through environment interaction, reward-based learning, and neural network optimization.
+An AI agent that learns to play Flappy Bird using Deep Q-Networks (DQN) and PyTorch. The project demonstrates reinforcement learning through environment interaction, reward-based learning, and neural network optimization.
 
-## Tech Stack
+Tech Stack
 
-- **Language:** Python
-- **Deep Learning:** PyTorch
-- **Environment:** Gymnasium, Flappy Bird Gymnasium
-- **Game Interface:** Pygame
-- **Configuration:** YAML
+* Language: Python
+* Deep Learning: PyTorch
+* Environment: Gymnasium, Flappy Bird Gymnasium
+* Game Interface: Pygame
+* Configuration: YAML
 
-## Key Concepts
+Key Concepts
 
-- Deep Q-Network (DQN)
-- Experience Replay
-- Target Network
-- Epsilon-Greedy Exploration
-- Bellman Equation
-- Model Checkpointing
+* Deep Q-Network (DQN)
+* Experience Replay
+* Target Network
+* Epsilon-Greedy Exploration
+* Bellman Equation
+* Model Checkpointing
 
-## Project Structure
+Project Structure
 
-```text
 Flappy-Bird-Reinforcement-Learning/
+│
 ├── agent.py
 ├── dqn.py
 ├── experience_replay.py
@@ -30,49 +30,61 @@ Flappy-Bird-Reinforcement-Learning/
 ├── parameters.yaml
 ├── README.md
 └── .gitignore
-```
 
-## Getting Started
+Local Setup and Installation
 
-### 1. Clone the Repository
+Follow these steps to run the project locally.
 
-```bash
+1. Clone the Repository
+
 git clone https://github.com/kratika-agg/Flappy-Bird-Reinforcement-Learning.git
 cd Flappy-Bird-Reinforcement-Learning
-```
 
-### 2. Install Dependencies
+2. Create a Virtual Environment
 
-```bash
+python -m venv .venv
+
+3. Activate the Virtual Environment
+
+Windows (PowerShell):
+
+.\.venv\Scripts\Activate.ps1
+
+macOS / Linux:
+
+source .venv/bin/activate
+
+4. Install Dependencies
+
+python -m pip install --upgrade pip
 pip install torch gymnasium flappy-bird-gymnasium pygame pyyaml
-```
 
-### 3. Run the Game
+Running the Project
 
-```bash
+1. Launch the Game
+
 python game_flappy_bird.py
-```
 
-### 4. Train the Agent
+Use the SPACE key to control the bird.
 
-```bash
+2. Train the DQN Agent
+
 python agent.py <hyperparameter_set> --train
-```
 
-### 5. Evaluate the Trained Agent
+Replace <hyperparameter_set> with a valid configuration key defined in parameters.yaml.
 
-```bash
+3. Evaluate the Trained Agent
+
 python agent.py <hyperparameter_set>
-```
 
-Replace `<hyperparameter_set>` with a valid configuration key from `parameters.yaml`.
+Run evaluation after the trained model checkpoint has been generated.
 
-## Model Training
+Model Training
 
-The agent was trained using the DQN pipeline. Model checkpoints and training logs are generated in the local `runs/` directory and excluded from version control.
+The agent was trained using the DQN training pipeline. Model checkpoints and training logs are generated locally in the runs/ directory and excluded from version control.
 
-## Author
+Author
 
-**Kratika Agrawal**
+Kratika Agrawal
 
-[GitHub](https://github.com/kratika-agg)
+GitHub Profile
