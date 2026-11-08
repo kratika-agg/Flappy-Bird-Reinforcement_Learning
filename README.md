@@ -6,7 +6,7 @@ Tech Stack
 
 * Language: Python
 * Deep Learning: PyTorch
-* Environment: Gymnasium, Flappy Bird Gymnasium
+* Environment: Gymnasium, Flappy Bird Gymnasiumm
 * Game Interface: Pygame
 * Configuration: YAML
 
