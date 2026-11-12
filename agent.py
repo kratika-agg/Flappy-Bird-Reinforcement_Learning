@@ -1,7 +1,8 @@
-
+ 
 import flappy_bird_gymnasium
 import gymnasium as gym
 import random
+import numpy as np
 from dqn import DQN
 from experience_replay import ReplayMemory
 import itertools
@@ -42,7 +43,6 @@ class Agent:
     def __init__(self, param_set):
         self.param_set = param_set
 
-        # Load and validate configuration.
         try:
             with open("parameters.yaml", "r", encoding="utf-8") as f:
                 all_param_set = yaml.safe_load(f)
@@ -95,6 +95,18 @@ class Agent:
         self.reward_threshold = params["reward_threshold"]
         self.network_sync_rate = params["network_sync_rate"]
 
+        # Configurable random seed.
+        self.seed = params.get("seed", 42)
+
+        if (
+            isinstance(self.seed, bool)
+            or not isinstance(self.seed, int)
+            or self.seed < 0
+        ):
+            raise ValueError(
+                "Parameter 'seed' must be a non-negative integer."
+            )
+
         self.loss_fn = nn.MSELoss()
         self.optimizer = None
 
@@ -107,7 +119,6 @@ class Agent:
 
     @staticmethod
     def _validate_parameters(params):
-        """Validate DQN hyperparameters before training."""
 
         numeric_parameters = [
             "alpha",
@@ -194,6 +205,20 @@ class Agent:
                 "'mini_batch_size' cannot exceed 'replay_memory_size'."
             )
 
+    def set_random_seeds(self, env=None):
+        """Set random seeds for reproducible experiments."""
+
+        random.seed(self.seed)
+        np.random.seed(self.seed)
+        torch.manual_seed(self.seed)
+
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(self.seed)
+
+        if env is not None:
+            env.reset(seed=self.seed)
+            env.action_space.seed(self.seed)
+
     def run(self, is_training=True, render=False):
 
         env = gym.make(
@@ -201,37 +226,42 @@ class Agent:
             render_mode="human" if render else None
         )
 
-        num_states = env.observation_space.shape[0]
-        num_actions = env.action_space.n
-
-        policy_dqn = DQN(num_states, num_actions).to(device)
-
-        if is_training:
-            memory = ReplayMemory(self.replay_memory_size)
-            epsilon = self.epsilon_init
-
-            target_dqn = DQN(num_states, num_actions).to(device)
-            target_dqn.load_state_dict(policy_dqn.state_dict())
-
-            steps = 0
-
-            self.optimizer = optim.Adam(
-                policy_dqn.parameters(),
-                lr=self.alpha
-            )
-
-            best_reward = float("-inf")
-
-        else:
-            policy_dqn.load_state_dict(
-                torch.load(self.MODEL_FILE, map_location=device)
-            )
-            policy_dqn.eval()
-
         try:
+            self.set_random_seeds(env)
+
+            num_states = env.observation_space.shape[0]
+            num_actions = env.action_space.n
+
+            policy_dqn = DQN(num_states, num_actions).to(device)
+
+            if is_training:
+                memory = ReplayMemory(self.replay_memory_size)
+                epsilon = self.epsilon_init
+
+                target_dqn = DQN(num_states, num_actions).to(device)
+                target_dqn.load_state_dict(policy_dqn.state_dict())
+
+                steps = 0
+
+                self.optimizer = optim.Adam(
+                    policy_dqn.parameters(),
+                    lr=self.alpha
+                )
+
+                best_reward = float("-inf")
+
+            else:
+                policy_dqn.load_state_dict(
+                    torch.load(self.MODEL_FILE, map_location=device)
+                )
+                policy_dqn.eval()
+
             for episode in itertools.count():
 
-                state, _ = env.reset()
+                # Reset with a reproducible seed for each episode.
+                episode_seed = self.seed + episode
+                state, _ = env.reset(seed=episode_seed)
+
                 state = torch.tensor(
                     state, dtype=torch.float, device=device
                 )
