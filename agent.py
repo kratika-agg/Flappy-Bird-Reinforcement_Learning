@@ -48,7 +48,6 @@ class Agent:
 
         self.param_set = param_set
 
-        # Load and validate YAML configuration.
         if not os.path.exists("parameters.yaml"):
             raise FileNotFoundError(
                 "parameters.yaml was not found."
@@ -92,7 +91,6 @@ class Agent:
 
         self.env_id = params.get("env_id", "FlappyBird-v0")
 
-        # Validate numeric parameters.
         numeric_parameters = [
             "epsilon_init",
             "epsilon_min",
@@ -174,7 +172,6 @@ class Agent:
                 "seed must be a non-negative integer."
             )
 
-        # Store validated parameters.
         self.alpha = params["alpha"]
         self.gamma = params["gamma"]
 
@@ -203,8 +200,6 @@ class Agent:
 
     def set_random_seeds(self, env=None):
 
-        """Set random seeds for reproducible experiments."""
-
         random.seed(self.seed)
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
@@ -214,6 +209,78 @@ class Agent:
 
         if env is not None:
             env.action_space.seed(self.seed)
+
+    # Save a portable and safer model checkpoint.
+    def save_checkpoint(self, model):
+
+        checkpoint = {
+            "format_version": 1,
+            "model_state_dict": {
+                key: value.detach().cpu()
+                for key, value in model.state_dict().items()
+            },
+        }
+
+        temp_file = self.MODEL_FILE + ".tmp"
+
+        try:
+            torch.save(checkpoint, temp_file)
+
+            # Replace the previous checkpoint only after saving succeeds.
+            os.replace(temp_file, self.MODEL_FILE)
+
+        finally:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+
+    # Load a checkpoint safely and support older model files.
+    def load_checkpoint(self, model):
+
+        if not os.path.exists(self.MODEL_FILE):
+            raise FileNotFoundError(
+                f"Model file not found: {self.MODEL_FILE}. "
+                "Train the agent first."
+            )
+
+        try:
+            checkpoint = torch.load(
+                self.MODEL_FILE,
+                map_location=device,
+                weights_only=True
+            )
+
+        except TypeError:
+            # Compatibility with older PyTorch versions.
+            checkpoint = torch.load(
+                self.MODEL_FILE,
+                map_location=device
+            )
+
+        if not isinstance(checkpoint, dict):
+            raise ValueError(
+                "Invalid checkpoint: expected a dictionary."
+            )
+
+        # Support both the new checkpoint format and older state dictionaries.
+        if "model_state_dict" in checkpoint:
+            model_state = checkpoint["model_state_dict"]
+        else:
+            model_state = checkpoint
+
+        if not isinstance(model_state, dict):
+            raise ValueError(
+                "Invalid checkpoint: model weights are missing."
+            )
+
+        if not all(
+            isinstance(key, str) and isinstance(value, torch.Tensor)
+            for key, value in model_state.items()
+        ):
+            raise ValueError(
+                "Invalid checkpoint: model weights have an unsupported format."
+            )
+
+        model.load_state_dict(model_state)
 
     def run(self, is_training=True, render=False):
 
@@ -236,7 +303,6 @@ class Agent:
 
             if is_training:
 
-                # Create replay memory using the configured seed.
                 memory = ReplayMemory(
                     self.replay_memory_size,
                     seed=self.seed
@@ -266,18 +332,7 @@ class Agent:
 
             else:
 
-                if not os.path.exists(self.MODEL_FILE):
-                    raise FileNotFoundError(
-                        f"Model file not found: {self.MODEL_FILE}. "
-                        "Train the agent first."
-                    )
-
-                model_state = torch.load(
-                    self.MODEL_FILE,
-                    map_location=device
-                )
-
-                policy_dqn.load_state_dict(model_state)
+                self.load_checkpoint(policy_dqn)
                 policy_dqn.eval()
 
             for episode in itertools.count():
@@ -303,7 +358,6 @@ class Agent:
                     and episode_reward < self.reward_threshold
                 ):
 
-                    # Epsilon-greedy action selection.
                     if is_training and random.random() < epsilon:
 
                         action = env.action_space.sample()
@@ -326,7 +380,6 @@ class Agent:
                                 .argmax()
                             )
 
-                    # Take action in the environment.
                     next_state, reward, terminated, truncated, _ = (
                         env.step(action.item())
                     )
@@ -347,7 +400,6 @@ class Agent:
 
                     if is_training:
 
-                        # Store true termination separately from truncation.
                         memory.append((
                             state,
                             action,
@@ -360,7 +412,6 @@ class Agent:
 
                     state = next_state_tensor
 
-                # Episode completed.
                 if is_training:
 
                     print(
@@ -378,13 +429,11 @@ class Agent:
 
                 if is_training:
 
-                    # Decay exploration rate.
                     epsilon = max(
                         epsilon * self.epsilon_decay,
                         self.epsilon_min
                     )
 
-                    # Save the best model.
                     if episode_reward > best_reward:
 
                         log_msg = (
@@ -399,14 +448,11 @@ class Agent:
                         ) as file:
                             file.write(log_msg + "\n")
 
-                        torch.save(
-                            policy_dqn.state_dict(),
-                            self.MODEL_FILE
-                        )
+                        # Save using the new checkpoint method.
+                        self.save_checkpoint(policy_dqn)
 
                         best_reward = episode_reward
 
-                    # Train the policy network.
                     if len(memory) >= self.mini_batch_size:
 
                         mini_batch = memory.sample(
@@ -419,7 +465,6 @@ class Agent:
                             target_dqn
                         )
 
-                    # Synchronize target network.
                     if steps >= self.network_sync_rate:
 
                         target_dqn.load_state_dict(
@@ -430,7 +475,6 @@ class Agent:
 
         finally:
 
-            # Always close the environment.
             env.close()
 
     def optimize(self, mini_batch, policy_dqn, target_dqn):
@@ -450,7 +494,6 @@ class Agent:
             device=device
         )
 
-        # Calculate target Q-values.
         with torch.no_grad():
 
             target_q = rewards + (
@@ -459,19 +502,16 @@ class Agent:
                 * target_dqn(next_states).max(dim=1)[0]
             )
 
-        # Calculate predicted Q-values.
         current_q = policy_dqn(states).gather(
             dim=1,
             index=actions.unsqueeze(dim=1)
         ).squeeze(dim=1)
 
-        # Calculate loss.
         loss = self.loss_fn(
             current_q,
             target_q
         )
 
-        # Update policy network.
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
