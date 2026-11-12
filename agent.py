@@ -185,7 +185,9 @@ class Agent:
         self.network_sync_rate = params["network_sync_rate"]
         self.reward_threshold = params["reward_threshold"]
 
-        self.loss_fn = nn.MSELoss()
+        # Improvement 6: Huber Loss for more stable learning.
+        self.loss_fn = nn.SmoothL1Loss()
+
         self.optimizer = None
 
         self.LOG_FILE = os.path.join(
@@ -225,15 +227,13 @@ class Agent:
 
         try:
             torch.save(checkpoint, temp_file)
-
-            # Replace the previous checkpoint only after saving succeeds.
             os.replace(temp_file, self.MODEL_FILE)
 
         finally:
             if os.path.exists(temp_file):
                 os.remove(temp_file)
 
-    # Load a checkpoint safely and support older model files.
+    # Load checkpoint and support older model files.
     def load_checkpoint(self, model):
 
         if not os.path.exists(self.MODEL_FILE):
@@ -250,7 +250,6 @@ class Agent:
             )
 
         except TypeError:
-            # Compatibility with older PyTorch versions.
             checkpoint = torch.load(
                 self.MODEL_FILE,
                 map_location=device
@@ -261,7 +260,6 @@ class Agent:
                 "Invalid checkpoint: expected a dictionary."
             )
 
-        # Support both the new checkpoint format and older state dictionaries.
         if "model_state_dict" in checkpoint:
             model_state = checkpoint["model_state_dict"]
         else:
@@ -277,7 +275,7 @@ class Agent:
             for key, value in model_state.items()
         ):
             raise ValueError(
-                "Invalid checkpoint: model weights have an unsupported format."
+                "Invalid checkpoint: unsupported model weights."
             )
 
         model.load_state_dict(model_state)
@@ -448,7 +446,6 @@ class Agent:
                         ) as file:
                             file.write(log_msg + "\n")
 
-                        # Save using the new checkpoint method.
                         self.save_checkpoint(policy_dqn)
 
                         best_reward = episode_reward
@@ -507,13 +504,22 @@ class Agent:
             index=actions.unsqueeze(dim=1)
         ).squeeze(dim=1)
 
+        # Calculate Huber Loss.
         loss = self.loss_fn(
             current_q,
             target_q
         )
 
         self.optimizer.zero_grad()
+
         loss.backward()
+
+        # Improvement 6: Gradient clipping.
+        torch.nn.utils.clip_grad_norm_(
+            policy_dqn.parameters(),
+            max_norm=1.0
+        )
+
         self.optimizer.step()
 
 
