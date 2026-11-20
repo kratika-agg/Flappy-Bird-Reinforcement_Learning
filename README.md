@@ -77,7 +77,7 @@ Replace <hyperparameter_set> with a valid configuration key defined in parameter
 
 python agent.py <hyperparameter_set>
 
-Run evaluation after the trained model checkpoint has been generated and evaluated.
+Run evaluation after the trained model checkpoint has been generated.
 
 Model Training
 
