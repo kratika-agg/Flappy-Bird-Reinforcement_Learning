@@ -10,7 +10,7 @@ Tech Stack
 * Game Interface: Pygame
 * Configuration: YAML
 
-Key Concepts
+Key Concepts and Components 
 
 * Deep Q-Network (DQN)
 * Experience Replay
