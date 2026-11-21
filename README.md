@@ -2,7 +2,7 @@ Flappy Bird AI | Deep Reinforcement Learning (DQN)
 
 An AI agent that learns to play Flappy Bird using Deep Q-Networks (DQN) and PyTorch. The project demonstrates reinforcement learning through environment interaction, reward-based learning, and neural network optimization.
 
-Tech Stack and Components 
+Tech Stack
 
 * Language: Python
 * Deep Learning: PyTorch
