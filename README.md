@@ -19,7 +19,7 @@ Key Concepts
 * Bellman Equation
 * Model Checkpointing
 
-Project Structure and Architecture 
+Project Structure 
 
 Flappy-Bird-Reinforcement-Learning/
 │
